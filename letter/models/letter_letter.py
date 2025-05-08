@@ -47,6 +47,7 @@ class Letter(models.Model):
         store=False,
     )
 
+
     def read(self, fields=None, load="_classic_read"):
         if fields and "company_id" not in fields:
             fields.append("company_id")
@@ -98,7 +99,19 @@ class Letter(models.Model):
         column1="letter_id",
         column2="partner_id",
         string="Recipients",
+        default=lambda self: self._default_partner_ids()
     )
+
+    def _default_partner_ids(self):
+        if self.env.context.get('inbound_letter_id'):
+            inbound_letter = self.env['letter.inbound'].browse(
+                self.env.context['inbound_letter_id']
+            )
+            return [(6, 0, [inbound_letter.partner_id.id])]
+        return False
+
+
+
     color = fields.Integer(default=lambda self: self._get_default_color())
     letter_type_id = fields.Many2one(
         comodel_name="letter.type",
@@ -106,6 +119,7 @@ class Letter(models.Model):
         required=True,
         ondelete="restrict",
     )
+
     letter_type_image = fields.Binary(related="letter_type_id.image")
 
     active = fields.Boolean(default=True)
